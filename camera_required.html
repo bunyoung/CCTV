@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>กรุณาเปิดกล้อง</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans Thai', sans-serif;
+      background: linear-gradient(to right, #f8f9fa, #e0f7fa);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      color: #333;
+      text-align: center;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 40px;
+      max-width: 420px;
+      width: 90%;
+    }
+    h1 {
+      color: #d32f2f;
+      margin-bottom: 0.5em;
+    }
+    p {
+      font-size: 1.1em;
+      margin-bottom: 1.5em;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .icon {
+      font-size: 60px;
+      color: #f44336;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📷🚫</div>
+    <h1>ไม่สามารถเข้าถึงกล้องได้</h1>
+    <p>ระบบต้องการสิทธิ์ในการใช้งานกล้อง<br>กรุณาเปิดสิทธิ์กล้องในเบราว์เซอร์ของคุณ</p>
+    <button onclick="goBack()">🔄 กลับไปลองใหม่</button>
+  </div>
+
+  <script>
+    function goBack() {
+      window.location.href = 'index.html'; // เปลี่ยนตามหน้าหลักของคุณ
+    }
+
+    // แจ้งเตือนอัตโนมัติเมื่อเข้า
+    Swal.fire({
+      icon: 'warning',
+      title: 'กรุณาเปิดกล้อง',
+      text: 'ระบบไม่สามารถเข้าถึงกล้องได้ โปรดอนุญาตให้ใช้งานกล้องก่อนเริ่ม',
+      confirmButtonText: 'เข้าใจแล้ว',
+      backdrop: true
+    });
+  </script>
+</body>
+</html>

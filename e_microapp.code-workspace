@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "../e_microapp"
+		},
+		{
+			"path": "../webcam-stream"
+		}
+	],
+	"settings": {}
+}

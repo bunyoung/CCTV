@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>📷 ระบบกล้องตรวจจับการเคลื่อนไหว</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Niramit&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Niramit', sans-serif; background-color: #f8f9fa; }
+    video { width: 100%; border: 3px solid #0d6efd; border-radius: 10px; }
+    select { margin-bottom: 10px; }
+    .btn { font-size: 16px; }
+  </style>
+</head>
+<body class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="text-primary m-0">🎥 ระบบตรวจจับความเคลื่อนไหว</h4>
+    <button class="btn btn-outline-danger btn-sm" onclick="logout()">🚪 ออกจากระบบ</button>
+  </div>
+
+  <div class="mb-2">
+    <label for="cameraSelect">เลือกกล้อง:</label>
+    <select id="cameraSelect" class="form-select"></select>
+  </div>
+
+  <video id="video" autoplay playsinline muted></video>
+
+  <div class="row g-2 mt-3">
+    <div class="col-6">
+      <button id="startBtn" class="btn btn-success w-100">▶️ เริ่มตรวจจับ</button>
+    </div>
+    <div class="col-6">
+      <button id="stopBtn" class="btn btn-danger w-100" disabled>⏹️ หยุด</button>
+    </div>
+  </div>
+
+  <audio id="alertSound" src="assets/sound/beep.wav" preload="auto"></audio>
+
+  <script>
+    let mediaRecorder, recordedChunks = [], stream = null, motionInterval, lastImageData = null;
+    let selectedDeviceId = null;
+
+    const video = document.getElementById('video');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const alertSound = document.getElementById('alertSound');
+
+    async function getCameras() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+      cameraSelect.innerHTML = '';
+      if (videoDevices.length === 0) {
+        Swal.fire({ icon: 'error', title: 'ไม่พบกล้อง', text: 'กรุณาเชื่อมต่อกล้อง' });
+        return;
+      }
+
+      videoDevices.forEach((device, index) => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.text = device.label || `กล้อง ${index + 1}`;
+        cameraSelect.appendChild(option);
+      });
+
+      selectedDeviceId = videoDevices[0]?.deviceId;
+      cameraSelect.value = selectedDeviceId;
+    }
+
+    cameraSelect.addEventListener('change', () => {
+      selectedDeviceId = cameraSelect.value;
+    });
+
+    function logout() {
+      Swal.fire({
+        title: 'ต้องการออกจากระบบหรือไม่?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ใช่, ออกเลย',
+        cancelButtonText: 'ยกเลิก'
+      }).then(result => {
+        if (result.isConfirmed) {
+          window.location.href = 'logout.php';
+        }
+      });
+    }
+
+    function getImageDifference(current, previous) {
+      if (!previous) return 100;
+      let diff = 0;
+      for (let i = 0; i < current.data.length; i += 4) {
+        diff += Math.abs(current.data[i] - previous.data[i]) +
+                Math.abs(current.data[i+1] - previous.data[i+1]) +
+                Math.abs(current.data[i+2] - previous.data[i+2]);
+      }
+      return diff / (current.data.length / 4);
+    }
+
+    async function startRecording() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        motionInterval = setInterval(() => {
+          if (video.videoWidth === 0 || video.videoHeight === 0) return;
+
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const currentFrame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const diff = getImageDifference(currentFrame, lastImageData);
+          lastImageData = currentFrame;
+
+          if (diff > 20 && (!mediaRecorder || mediaRecorder.state !== 'recording')) {
+            alertSound.play().catch(err => console.warn("ไม่สามารถเล่นเสียง:", err.message));
+            startMediaRecorder();
+          }
+        }, 500);
+
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+
+        Swal.fire({ icon: 'success', title: 'เริ่มการตรวจจับแล้ว', timer: 1000, showConfirmButton: false });
+
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'ไม่สามารถเปิดกล้องได้', text: err.message });
+      }
+    }
+
+    function startMediaRecorder() {
+      recordedChunks = [];
+
+      let options = {};
+      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+        options.mimeType = 'video/webm;codecs=vp9';
+      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+        options.mimeType = 'video/webm;codecs=vp8';
+      } else if (MediaRecorder.isTypeSupported('video/webm')) {
+        options.mimeType = 'video/webm';
+      } else {
+        Swal.fire({ icon: 'error', title: 'เบราว์เซอร์ไม่รองรับการบันทึกวิดีโอ' });
+        return;
+      }
+
+      try {
+        mediaRecorder = new MediaRecorder(stream, options);
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'เริ่มบันทึกวิดีโอไม่สำเร็จ', text: err.message });
+        return;
+      }
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const formData = new FormData();
+        formData.append('video', blob, 'motion.webm');
+
+        fetch('upload_video.php', {
+          method: 'POST',
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            Swal.fire({ icon: 'success', title: 'อัปโหลดวิดีโอสำเร็จ', timer: 1500, showConfirmButton: false });
+          } else {
+            Swal.fire({ icon: 'error', title: 'อัปโหลดล้มเหลว', text: data.message });
+          }
+        })
+        .catch(err => {
+          Swal.fire({ icon: 'error', title: 'ผิดพลาดในการส่งข้อมูล', text: err.message });
+        });
+
+        mediaRecorder = null;
+      };
+
+      mediaRecorder.start();
+
+      setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+        }
+      }, 8000); // บันทึก 8 วินาที
+    }
+
+    function stopRecording() {
+      clearInterval(motionInterval);
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+
+      video.srcObject = null;
+      stream = null;
+      mediaRecorder = null;
+      recordedChunks = [];
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+
+      Swal.fire({ icon: 'info', title: 'หยุดกล้องแล้ว', timer: 1000, showConfirmButton: false });
+    }
+
+    startBtn.addEventListener('click', startRecording);
+    stopBtn.addEventListener('click', stopRecording);
+    window.addEventListener('DOMContentLoaded', getCameras);
+  </script>
+</body>
+</html>

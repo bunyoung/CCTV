@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Niramit&display=swap');
+
+html, body {
+  height: 100%;
+  margin: 0; padding: 0;
+  font-family: 'Niramit', sans-serif;
+  font-size: 18px;
+  background: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  text-align: center;
+  background: white;
+  padding: 20px 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  max-width: 420px;
+  width: 90vw;
+}
+
+video {
+  width: 100%;
+  max-height: 300px;
+  border-radius: 10px;
+  background: black;
+  margin-bottom: 15px;
+}
+
+button, select {
+  font-family: 'Niramit', sans-serif;
+  font-size: 18px;
+  padding: 10px 25px;
+  margin: 5px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:disabled, select:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+button#startBtn {
+  background-color: #28a745;
+  color: white;
+}
+button#startBtn:hover:not(:disabled) {
+  background-color: #218838;
+}
+button#stopBtn {
+  background-color: #dc3545;
+  color: white;
+}
+button#stopBtn:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+button#actionBtn {
+  background-color: #007bff;
+  color: white;
+}
+button#actionBtn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.time-settings {
+  margin: 15px 0 25px;
+  text-align: left;
+}
+.time-settings label {
+  display: inline-block;
+  width: 110px;
+  font-weight: 600;
+}
+.time-settings input[type="time"] {
+  font-size: 18px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 140px;
+}

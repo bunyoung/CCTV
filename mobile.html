@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>📼 เลือกดูวิดีโอย้อนหลัง</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: 'Niramit', sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    select, button {
+      width: 100%;
+      font-size: 1rem;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    video {
+      margin-top: 15px;
+      width: 100%;
+      max-height: 480px;
+      border: 3px solid #0d6efd;
+      border-radius: 10px;
+      background: black;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📼 เลือกดูวิดีโอย้อนหลัง</h2>
+  <label for="videoSelect">เลือกวิดีโอ:</label>
+  <select id="videoSelect">
+    <option value="" disabled selected>-- กรุณาเลือกวิดีโอ --</option>
+  </select>
+
+  <video id="videoPlayer" controls>
+    <source src="" type="video/webm" />
+    เบราว์เซอร์ของคุณไม่รองรับการเล่นวิดีโอ
+  </video>
+
+  <script>
+    const videoSelect = document.getElementById('videoSelect');
+    const videoPlayer = document.getElementById('videoPlayer');
+
+    // โหลดรายการไฟล์วิดีโอจากเซิร์ฟเวอร์ (แก้ URL ให้ตรงกับ API จริงของคุณ)
+    fetch('list_videos.php')
+      .then(response => response.json())
+      .then(files => {
+        files.forEach(file => {
+          const option = document.createElement('option');
+          option.value = file;
+          option.textContent = file;
+          videoSelect.appendChild(option);
+        });
+      })
+      .catch(error => {
+        alert('เกิดข้อผิดพลาดในการโหลดรายการวิดีโอ: ' + error);
+      });
+
+    // เมื่อเลือกวิดีโอ ให้เปลี่ยน src ของ video player แล้วเล่น
+    videoSelect.addEventListener('change', () => {
+      const selectedFile = videoSelect.value;
+      if (!selectedFile) return;
+      // กำหนด path โฟลเดอร์เก็บวิดีโอของคุณ
+      const videoPath = 'videos/' + selectedFile;
+      videoPlayer.src = videoPath;
+      videoPlayer.load();
+      videoPlayer.play();
+    });
+  </script>
+</body>
+</html>
